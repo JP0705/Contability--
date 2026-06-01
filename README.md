@@ -59,7 +59,7 @@ git clone https://github.com/seu-usuario/Arquivo.git
 ### 2. Entre na pasta do projeto
 
 ```bash
-cd geali
+cd contability-
 ```
 
 ### 3. Instale as dependências
