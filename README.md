@@ -42,6 +42,8 @@ project/
 │   └── index.html
 │
 ├── static/
+|   | └── img/
+|   |     └── logo.png
 │   ├── style.css
 │   └── script.js
 ```
