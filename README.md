@@ -121,17 +121,9 @@ via API da Groq.
 * [ ] Integração com banco de dados
 * [ ] Streaming de respostas
 
----
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT.
-
----
-
 ## 👨‍💻 Autor
 
-Desenvolvido TFGD
+Desenvolvido por - TFGD
 
 ---
 
