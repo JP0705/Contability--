@@ -9,7 +9,6 @@ Dashboard inteligente para consultoria utilizando IA generativa.
 * Chat inteligente com IA
 * Interface moderna estilo SaaS
 * Dashboard responsivo
-* Sidebar interativa
 * Integração com API LLM (Groq)
 * Respostas em tempo real
 * Estrutura Flask + Bootstrap
