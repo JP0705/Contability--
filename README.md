@@ -55,7 +55,7 @@ project/
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/Arquivo.git
+gh repo clone JP0705/Contability--
 ```
 
 ### 2. Entre na pasta do projeto
