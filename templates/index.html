@@ -30,7 +30,7 @@
 
     <nav class="menu">
 
-      <a href="#" class="nav-link">
+      <a href="#" class="nav-link active">
         <i class="bi bi-house"></i>
         <span class="text-menu">Início</span>
       </a>
@@ -75,7 +75,7 @@
         <span class="text-menu">Relatórios Financeiros</span>
       </a>
 
-      <a href="#" class="nav-link active">
+      <a href="#" class="nav-link">
         <i class="bi bi-people"></i>
         <span class="text-menu">Especialistas</span>
       </a>
@@ -96,7 +96,7 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
-      <h5>Módulo Ativo • Especialistas Contábeis</h5>
+      <img src="../static/img/logo.png" alt="Contability" class="topbar-logo">
 
       <button class="btn btn-light rounded-pill px-4">
         <i class="bi bi-file-earmark-text"></i>
@@ -130,18 +130,6 @@
             <span class="badge-soft">OK</span>
           </div>
         </div>
-
-        <div class="card-custom guide-card">
-          <h6 class="fw-bold mb-3">Orientações Contábeis</h6>
-
-          <ul>
-            <li>Revise os impostos pendentes da empresa.</li>
-            <li>Organize notas fiscais e comprovantes.</li>
-            <li>Atualize dados cadastrais no sistema.</li>
-            <li>Monitore fluxo de caixa e despesas mensais.</li>
-          </ul>
-        </div>
-
       </div>
 
       <!-- CHAT -->
@@ -154,11 +142,6 @@
               Consultoria inteligente para gestão financeira
             </small>
           </div>
-
-          <button class="btn btn-outline-primary rounded-pill">
-            <i class="bi bi-stars"></i>
-            Nova análise financeira
-          </button>
         </div>
 
         <div class="chat-body" id="chat-body">
@@ -206,6 +189,7 @@
 
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
