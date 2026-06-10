@@ -1,11 +1,11 @@
 import psycopg2
 
 conn = psycopg2.connect(
-    host="localhost",
-    database="contability",
-    port="5432",
-    user="postgres",
-    password="postgres"
+    host="",
+    database="",
+    port="",
+    user="",
+    password=""
 )
 
 def save_message(role, content):
