@@ -4,6 +4,8 @@ const chatBody = document.getElementById("chat-body");
 
 let typingIndicator = null;
 
+const newChatBtn = document.getElementById("new-chat-btn");
+
 function showTypingIndicator(){
 
     typingIndicator = document.createElement("div");
@@ -113,3 +115,29 @@ userInput.addEventListener("keydown", (e) => {
         sendMessage();
     }
 });
+
+async function newChat() {
+
+    try {
+
+        await fetch("/new-chat", {
+            method: "POST"
+        });
+
+        chatBody.innerHTML = "";
+
+        addMessage(`
+            👋 Olá!
+
+            Sou o Contability, seu assistente contábil.
+
+            Como posso ajudar você hoje?
+        `);
+
+    } catch (error) {
+
+        addMessage("Erro ao iniciar uma nova consulta.");
+    }
+}
+
+newChatBtn.addEventListener("click", newChat);
