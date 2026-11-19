@@ -11,8 +11,9 @@ Desenvolvida com **Flask**, **PostgreSQL** e modelos de linguagem via **Groq**.
 ### 🤖 Assistente contábil com IA
 * Chat especializado em contabilidade, Simples Nacional, MEI, impostos, folha e planejamento tributário
 * Respostas em Markdown (títulos, listas, tabelas), **sanitizadas com DOMPurify** antes de entrar na página
-* Histórico de conversa salvo por usuário e recarregado ao abrir a página
-* "Nova consulta" para começar do zero
+* **Conversas separadas**: cada conversa tem seu próprio contexto (a IA só lembra do que foi dito nela)
+* Lista de conversas agrupada por data, com renomear e excluir; título criado a partir da primeira pergunta
+* "Nova consulta" abre uma conversa em branco sem apagar as anteriores
 * Painel **Dashboard Financeiro** com o resumo real do mês (receitas, gastos, saldo, pendências e maior categoria de gasto)
 
 ### 🔐 Contas de usuário
@@ -61,26 +62,31 @@ Desenvolvida com **Flask**, **PostgreSQL** e modelos de linguagem via **Groq**.
 
 ```txt
 Contability--/
-├── app.py               # cria o app, sessão e rotas do chat com IA
-├── auth.py              # cadastro, login, logout e proteção das rotas
-├── gastos.py            # aba Gastos (resumo, gráfico, CRUD de transações)
-├── empresa.py           # Minha empresa (CNPJ)
-├── nfe.py               # leitor e validador de XML de NF-e (sem Flask)
-├── notas.py             # aba Notas Fiscais (importação, detalhe, lançamentos)
-├── consultoria.py       # Especialistas, conversas e Atendimentos
-├── wip.py               # menu lateral e páginas "Em breve"
-├── db.py                # conexão com o PostgreSQL e todas as consultas
-├── schema.sql           # esquema do banco (aplicado automaticamente)
-├── seed_demo.py         # cria dados de demonstração
-├── docker-compose.yml   # PostgreSQL local
+├── app.py                    # ponto de entrada: py app.py
+├── contability/              # a aplicação (pacote Flask)
+│   ├── __init__.py           # create_app(): configuração e registro dos módulos
+│   ├── db.py                 # conexão com o PostgreSQL e todas as consultas
+│   ├── schema.sql            # esquema do banco (aplicado automaticamente)
+│   ├── routes/               # páginas e APIs, uma por área
+│   │   ├── auth.py           #   cadastro, login, logout e proteção das rotas
+│   │   ├── chat.py           #   chat com IA em conversas separadas
+│   │   ├── gastos.py         #   aba Gastos
+│   │   ├── empresa.py        #   Minha empresa (CNPJ)
+│   │   ├── notas.py          #   aba Notas Fiscais
+│   │   ├── consultoria.py    #   Especialistas, conversas e Atendimentos
+│   │   └── wip.py            #   menu lateral e páginas "Em breve"
+│   ├── services/
+│   │   └── nfe.py            # leitor e validador de XML de NF-e (sem Flask)
+│   ├── templates/            # layouts/, partials/ e uma pasta por área
+│   └── static/               # css/, js/ e img/
+├── scripts/
+│   └── seed_demo.py          # cria dados de demonstração
+├── samples/nfe/              # XMLs de NF-e de exemplo (+ para_importar/)
+├── tests/                    # testes automatizados
+├── docker-compose.yml        # PostgreSQL local
 ├── requirements.txt
-├── .env.example         # modelo das variáveis de ambiente
-├── CLAUDE.md            # contexto técnico detalhado do projeto
-│
-├── templates/           # páginas Jinja (base.html é o layout comum)
-├── static/              # CSS por página, componentes comuns, JS e logo
-├── samples/nfe/         # XMLs de NF-e de exemplo (válidos e inválidos)
-└── tests/               # testes automatizados
+├── .env.example              # modelo das variáveis de ambiente
+└── CLAUDE.md                 # contexto técnico detalhado do projeto
 ```
 
 ---
@@ -144,7 +150,7 @@ Abra http://127.0.0.1:5000 e crie sua conta.
 Para testar com tudo preenchido:
 
 ```bash
-py seed_demo.py
+py scripts/seed_demo.py
 ```
 
 Cria a cliente fictícia **Mariana Costa — Doce Sabor Confeitaria** (Simples Nacional) com:
@@ -154,9 +160,9 @@ Cria a cliente fictícia **Mariana Costa — Doce Sabor Confeitaria** (Simples N
 * 6 contadores afiliados e uma conversa em andamento
 * uma conta de **contadora** para testar a página Atendimentos
 
-Os e-mails e senhas das contas demo estão no topo de `seed_demo.py` (`DEMO_EMAIL`, `DEMO_ACC_EMAIL`). Rodar de novo recria só os dados demo.
+Os e-mails e senhas das contas demo estão no topo de `scripts/seed_demo.py` (`DEMO_EMAIL`, `DEMO_ACC_EMAIL`). Rodar de novo recria só os dados demo.
 
-Os XMLs de exemplo ficam em `samples/nfe/`. Para recriá-los com datas atuais:
+Os XMLs de exemplo ficam em `samples/nfe/`; em `samples/nfe/para_importar/` há 5 notas extras da empresa demo para testar a importação pela tela. Para recriá-los com datas atuais:
 
 ```bash
 py samples/nfe/gerar_amostras.py
@@ -171,6 +177,7 @@ py -m unittest discover -s tests -v
 ```
 
 * `tests/test_nfe.py`: leitor de NF-e (leitura, recusas, segurança do XML, geração de lançamentos). Não precisa de banco.
+* `tests/test_chat.py`: conversas do chat com IA (contexto separado, renomear, excluir, isolamento entre usuários), usando uma IA falsa.
 * `tests/test_consultoria.py`: conversas, permissões, menu e páginas "Em breve". Usa o banco real com usuários temporários e é pulado se o PostgreSQL estiver fora do ar.
 
 ---
@@ -178,7 +185,7 @@ py -m unittest discover -s tests -v
 ## 📌 Roadmap
 
 ### Concluído
-* [x] Chat com IA e histórico persistente
+* [x] Chat com IA em conversas separadas, com histórico persistente
 * [x] Sistema de usuários com dados isolados
 * [x] Controle de gastos e receitas
 * [x] Dashboard financeiro da home com dados reais
@@ -206,7 +213,7 @@ py -m unittest discover -s tests -v
 * Todas as consultas ao banco filtram pelo usuário logado.
 * Conteúdo da IA e das conversas é sanitizado ou inserido como texto puro na página.
 * XMLs enviados são lidos com `defusedxml`.
-* As senhas do `seed_demo.py` são apenas para as contas demo em ambiente local.
+* As senhas do `scripts/seed_demo.py` são apenas para as contas demo em ambiente local.
 
 ---
 

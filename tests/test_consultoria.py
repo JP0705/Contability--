@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import db  # noqa: E402
+from contability import db  # noqa: E402
 
 try:
     db.init_db()
@@ -131,7 +131,7 @@ class TestConsultoria(unittest.TestCase):
         self.assertNotIn("Atendimentos", menu)  # só contador vê
         self.assertIn("Atendimentos", self.acc_client.get("/").get_data(as_text=True))
 
-        import wip
+        from contability.routes import wip
         for slug in wip.MODULES:
             r = self.client_a.get(f"/em-breve/{slug}")
             self.assertEqual(r.status_code, 200, slug)

@@ -19,4 +19,4 @@ Thumbs.db
 .claude/
 
 # backup local da logo anterior (já está no histórico do git como static/img/logo.png)
-static/img/logo_antigo.png
+contability/static/img/logo_antigo.png

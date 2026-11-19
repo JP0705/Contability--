@@ -1,0 +1,51 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Atendimentos{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/consultoria.css') }}">
+{% endblock %}
+
+{% block content_class %}stack-page{% endblock %}
+
+{% block tip %}Responda os clientes por aqui. As mensagens aparecem para eles em tempo real.{% endblock %}
+
+{% block content %}
+
+  <div class="page-header">
+    <h5>Atendimentos</h5>
+    <span>{{ accountant.name }} · CRC {{ accountant.crc }}</span>
+  </div>
+
+  <div class="card-custom">
+    <div class="card-header-custom">
+      <div>
+        <h6>Conversas com clientes</h6>
+        <span>{{ threads | length }} conversa{{ 's' if threads | length != 1 }}</span>
+      </div>
+    </div>
+
+    {% if threads %}
+    <ul class="inbox-list">
+      {% for t in threads %}
+      <li>
+        <a href="{{ url_for('consultoria.thread', consultation_id=t.id) }}" class="{{ 'has-unread' if t.unread }}">
+          <span class="avatar sm" style="background:{{ t.id | avatar_color }}">{{ t.client_name | initials }}</span>
+          <span class="inbox-text">
+            <strong>{{ t.client_name }}{% if t.client_company %} <small class="muted">· {{ t.client_company }}</small>{% endif %}</strong>
+            <small>{{ 'Você: ' if t.last_sender == 'contador' }}{{ t.last_content | truncate(90, True, '…') }}</small>
+          </span>
+          <span class="inbox-meta">
+            <small>{{ t.last_at.strftime('%d/%m %H:%M') }}</small>
+            {% if t.unread %}<span class="unread-badge">{{ t.unread }}</span>{% endif %}
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-state">Nenhum cliente iniciou conversa com você ainda.</p>
+    {% endif %}
+  </div>
+
+{% endblock %}

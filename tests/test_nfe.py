@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "samples" / "nfe"))
 
 import gerar_amostras as amostras  # noqa: E402
-import nfe  # noqa: E402
+from contability.services import nfe  # noqa: E402
 
 HOJE = date(2026, 11, 18)
 
@@ -127,7 +127,7 @@ class TestRecusa(unittest.TestCase):
 class TestLancamentos(unittest.TestCase):
 
     def setUp(self):
-        import notas  # importa Flask; só aqui para os outros testes rodarem sem ele
+        from contability.routes import notas  # importa Flask; só aqui para os outros testes rodarem sem ele
         self.build = notas.build_launches
 
     def test_compra_em_parcelas(self):

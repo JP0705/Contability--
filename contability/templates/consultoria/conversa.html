@@ -1,0 +1,77 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Conversa com {{ other_name }}{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/consultoria.css') }}">
+{% endblock %}
+
+{% block content_class %}conversa-page{% endblock %}
+
+{% block topbar_actions %}
+  <a class="btn btn-light rounded-pill px-3" href="{{ url_for('consultoria.directory') if cliente else url_for('consultoria.inbox') }}">
+    <i class="bi bi-arrow-left"></i>
+    <span class="d-none d-md-inline">{{ 'Especialistas' if cliente else 'Atendimentos' }}</span>
+  </a>
+{% endblock %}
+
+{% block content %}
+
+  <div class="chat-wrapper consult-chat"
+       id="consult-chat"
+       data-role="{{ role }}"
+       data-url="{{ url_for('consultoria.poll', consultation_id=conv.id) }}"
+       data-last-id="{{ last_id }}">
+
+    <div class="chat-header">
+      <div class="d-flex align-items-center gap-3">
+        <span class="avatar" style="background:{{ other_seed | avatar_color }}">{{ other_name | initials }}
+          {% if cliente %}<i class="presence {{ 'on' if conv.acc_available else 'off' }}"></i>{% endif %}
+        </span>
+        <div>
+          <h6 class="mb-0 fw-bold">{{ other_name }}</h6>
+          <small class="text-muted">
+            {% if cliente %}
+              Contador afiliado · CRC {{ conv.acc_crc }}
+            {% else %}
+              Cliente{% if conv.client_company %} · {{ conv.client_company }}{% endif %} · {{ conv.client_email }}
+            {% endif %}
+          </small>
+        </div>
+      </div>
+      <span class="live-dot" id="live-status" title="Atualizando automaticamente"><i></i> ao vivo</span>
+    </div>
+
+    <div class="chat-body" id="consult-body" aria-live="polite">
+      <div class="consult-intro" id="consult-intro" {% if messages %}hidden{% endif %}>
+        <i class="bi bi-chat-heart"></i>
+        {% if cliente %}
+          <p><strong>Comece a conversa com {{ other_name.split()[0] }}.</strong><br>
+          Descreva sua dúvida com o máximo de contexto (regime tributário, faturamento, prazos).
+          O contador responde por aqui mesmo.</p>
+        {% else %}
+          <p><strong>Nenhuma mensagem ainda.</strong></p>
+        {% endif %}
+      </div>
+    </div>
+
+    <form class="chat-footer" id="consult-form" autocomplete="off">
+      <div class="input-group">
+        <textarea class="form-control chat-input" id="consult-input" rows="1" maxlength="2000"
+                  placeholder="Escreva sua mensagem para {{ other_name.split()[0] }}..." aria-label="Mensagem"></textarea>
+        <button class="btn btn-primary btn-send" type="submit" aria-label="Enviar">
+          <i class="bi bi-send"></i>
+        </button>
+      </div>
+      <small class="consult-hint">Enter envia · Shift+Enter quebra linha</small>
+    </form>
+
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script id="consult-messages" type="application/json">{{ messages | tojson }}</script>
+  <script src="{{ url_for('static', filename='js/conversa.js') }}"></script>
+{% endblock %}

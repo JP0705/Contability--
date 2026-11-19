@@ -1,0 +1,73 @@
+{% extends "layouts/auth.html" %}
+
+{% block title %}Criar conta{% endblock %}
+
+{% block heading %}
+  <h1>Crie sua conta</h1>
+  <p>Leva menos de um minuto para começar.</p>
+{% endblock %}
+
+{% block form %}
+  <form method="post" novalidate class="auth-form" data-loading-text="Criando conta...">
+
+    <div class="field">
+      <label for="name">Nome</label>
+      <div class="input-icon">
+        <i class="bi bi-person"></i>
+        <input type="text" id="name" name="name" class="form-control"
+               placeholder="Como devemos te chamar?" value="{{ name or '' }}"
+               maxlength="120" autocomplete="name" required autofocus>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <div class="input-icon">
+        <i class="bi bi-envelope"></i>
+        <input type="email" id="email" name="email" class="form-control"
+               placeholder="voce@empresa.com.br" value="{{ email or '' }}"
+               autocomplete="email" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="password">Senha</label>
+      <div class="input-icon">
+        <i class="bi bi-lock"></i>
+        <input type="password" id="password" name="password" class="form-control"
+               placeholder="Mínimo de 8 caracteres" minlength="8"
+               autocomplete="new-password" required data-strength>
+        <button type="button" class="toggle-pass" aria-label="Mostrar senha" aria-pressed="false" data-target="password">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
+      <div class="strength" id="strength" aria-live="polite">
+        <div class="strength-bars"><span></span><span></span><span></span><span></span></div>
+        <small class="strength-label">Use letras maiúsculas, números e símbolos para uma senha mais forte</small>
+      </div>
+      <small class="caps-hint" hidden><i class="bi bi-capslock-fill"></i> Caps Lock está ativado</small>
+    </div>
+
+    <div class="field">
+      <label for="confirm">Confirmar senha</label>
+      <div class="input-icon">
+        <i class="bi bi-shield-check"></i>
+        <input type="password" id="confirm" name="confirm" class="form-control"
+               placeholder="Repita a senha" minlength="8"
+               autocomplete="new-password" required data-match="password">
+        <button type="button" class="toggle-pass" aria-label="Mostrar senha" aria-pressed="false" data-target="confirm">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
+      <small class="match-hint" hidden aria-live="polite"></small>
+    </div>
+
+    <button type="submit" class="btn btn-brand auth-submit">
+      <span>Criar conta</span>
+      <i class="bi bi-arrow-right"></i>
+    </button>
+
+  </form>
+
+  <p class="auth-switch">Já tem conta? <a href="{{ url_for('auth.login') }}">Entrar</a></p>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "layouts/auth.html" %}
+
+{% block title %}Entrar{% endblock %}
+
+{% block heading %}
+  <h1>Bem-vindo de volta 👋</h1>
+  <p>Entre para continuar sua gestão contábil.</p>
+{% endblock %}
+
+{% block form %}
+  <form method="post" novalidate class="auth-form" data-loading-text="Entrando...">
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <div class="input-icon">
+        <i class="bi bi-envelope"></i>
+        <input type="email" id="email" name="email" class="form-control"
+               placeholder="voce@empresa.com.br" value="{{ email or '' }}"
+               autocomplete="email" required autofocus>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="password">Senha</label>
+      <div class="input-icon">
+        <i class="bi bi-lock"></i>
+        <input type="password" id="password" name="password" class="form-control"
+               placeholder="Sua senha" autocomplete="current-password" required>
+        <button type="button" class="toggle-pass" aria-label="Mostrar senha" aria-pressed="false" data-target="password">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
+      <small class="caps-hint" hidden><i class="bi bi-capslock-fill"></i> Caps Lock está ativado</small>
+    </div>
+
+    <button type="submit" class="btn btn-brand auth-submit">
+      <span>Entrar</span>
+      <i class="bi bi-arrow-right"></i>
+    </button>
+
+  </form>
+
+  <div class="auth-divider"><span>Novo por aqui?</span></div>
+
+  <a href="{{ url_for('auth.register') }}" class="btn auth-secondary">
+    <i class="bi bi-person-plus"></i> Criar uma conta
+  </a>
+{% endblock %}

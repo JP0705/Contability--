@@ -2,7 +2,7 @@
 
     py samples/nfe/gerar_amostras.py
 
-Empresa do cliente demo (seed_demo.py): DOCE SABOR CONFEITARIA — CNPJ em DEMO_CNPJ.
+Empresa do cliente demo (scripts/seed_demo.py): DOCE SABOR CONFEITARIA — CNPJ em DEMO_CNPJ.
 Os CNPJs, chaves e protocolos são fictícios, mas com dígitos verificadores válidos.
 Nenhum XML é assinado (o MVP não verifica assinatura).
 """
@@ -33,6 +33,11 @@ DEMO_CNPJ = cnpj_dv("457231740001")        # Doce Sabor Confeitaria (cliente dem
 MOINHO_CNPJ = cnpj_dv("118765430001")      # fornecedor de farinha
 EMBALA_CNPJ = cnpj_dv("230984560001")      # fornecedor de embalagens
 CAFE_CNPJ = cnpj_dv("334455660001")        # cliente PJ (cafeteria)
+LATICINIO_CNPJ = cnpj_dv("556677880001")   # fornecedor de laticínios
+EQUIP_CNPJ = cnpj_dv("667788990001")       # fornecedor de equipamentos
+BUFFET_CNPJ = cnpj_dv("778899000001")      # cliente PJ (buffet)
+FRUTAS_CNPJ = cnpj_dv("889900110001")      # fornecedor de frutas
+CONSUMIDOR_CPF = "52998224725"             # CPF fictício (DV válido) de consumidor final
 
 
 def item(n, cprod, xprod, ncm, cfop, un, q, vun, icms_xml, extra_imp=""):
@@ -182,6 +187,119 @@ def compra_embalagens_reforma(hoje):
                    [i1, i2], tot, cobr=dup, protocolo="135260000999888", extra_total=ibstot)
 
 
+# =========================================================
+# NOTAS EXTRAS PARA TESTAR A PÁGINA (não são importadas pelo seed)
+# Saem em samples/nfe/para_importar/
+# =========================================================
+
+def _parcelas(vnf, n, hoje, primeiro=15, intervalo=30, nfat=None):
+    p = round(vnf / n, 2)
+    valores = [p] * (n - 1) + [round(vnf - p * (n - 1), 2)]
+    dups = "".join(
+        f"<dup><nDup>{i:03d}</nDup><dVenc>{(hoje + timedelta(days=primeiro + intervalo * (i - 1))).isoformat()}</dVenc>"
+        f"<vDup>{v:.2f}</vDup></dup>" for i, v in enumerate(valores, 1))
+    fat = f"<fat><nFat>{nfat}</nFat><vOrig>{vnf:.2f}</vOrig><vDesc>0.00</vDesc><vLiq>{vnf:.2f}</vLiq></fat>" if nfat else ""
+    return f"<cobr>{fat}{dups}</cobr>"
+
+
+def compra_laticinios(hoje):
+    """Compra de laticínios com ICMS com redução de base (CST 20), autorizada, 2 parcelas."""
+    dh = (hoje - timedelta(days=3)).strftime("%Y-%m-%dT07:50:00-03:00")
+    ch = chave("52", hoje.strftime("%y%m"), LATICINIO_CNPJ, 1, 20877, 31415926)
+
+    def red(v):
+        return (f"<ICMS20><orig>0</orig><CST>20</CST><modBC>3</modBC><pRedBC>33.33</pRedBC>"
+                f"<vBC>{v * .6667:.2f}</vBC><pICMS>12.00</pICMS><vICMS>{v * .6667 * .12:.2f}</vICMS></ICMS20>")
+
+    i1, v1 = item(1, "LEITE-INT", "LEITE INTEGRAL UHT 1L (CX 12)", "04012010", "5102", "CX", 15, 54.90, red(15 * 54.90))
+    i2, v2 = item(2, "CREME-35", "CREME DE LEITE FRESCO 35% 1L", "04015010", "5102", "UN", 24, 21.40, red(24 * 21.40))
+    i3, v3 = item(3, "MANT-SAL", "MANTEIGA COM SAL 5KG", "04051000", "5102", "BD", 4, 189.00, red(4 * 189.00))
+    vprod = round(v1 + v2 + v3, 2)
+    vbc = round(v1 * .6667, 2) + round(v2 * .6667, 2) + round(v3 * .6667, 2)
+    vicms = round(v1 * .6667 * .12, 2) + round(v2 * .6667 * .12, 2) + round(v3 * .6667 * .12, 2)
+    tot, vnf = totais(vprod, vbc=vbc, vicms=vicms)
+    return nfe_xml(ch, 20877, dh, 1, "VENDA DE MERCADORIA ADQUIRIDA DE TERCEIROS",
+                   party("emit", LATICINIO_CNPJ, "LATICINIOS VALE VERDE LTDA", ie="105566778", crt=3),
+                   party("dest", DEMO_CNPJ, "DOCE SABOR CONFEITARIA LTDA", ie="109988776"),
+                   [i1, i2, i3], tot, cobr=_parcelas(vnf, 2, hoje, primeiro=12, intervalo=15, nfat=20877),
+                   protocolo="152260000777001")
+
+
+def compra_batedeira(hoje):
+    """Compra de equipamento com IPI, frete e desconto, autorizada, à vista (sem parcelas)."""
+    dh = (hoje - timedelta(days=6)).strftime("%Y-%m-%dT14:20:00-03:00")
+    ch = chave("35", hoje.strftime("%y%m"), EQUIP_CNPJ, 3, 1450, 27182818)
+    v = 4890.00
+    icms = (f"<ICMS00><orig>0</orig><CST>00</CST><modBC>3</modBC><vBC>{v:.2f}</vBC>"
+            f"<pICMS>12.00</pICMS><vICMS>{v * .12:.2f}</vICMS></ICMS00>")
+    ipi = (f"<IPI><cEnq>999</cEnq><IPITrib><CST>50</CST><vBC>{v:.2f}</vBC><pIPI>5.00</pIPI>"
+           f"<vIPI>{v * .05:.2f}</vIPI></IPITrib></IPI>")
+    i1, v1 = item(1, "BAT-20L", "BATEDEIRA PLANETARIA INDUSTRIAL 20L", "84382010", "6101", "UN", 1, v, icms, ipi)
+    tot, _ = totais(v1, vbc=v1, vicms=round(v1 * .12, 2), vipi=round(v1 * .05, 2), vfrete=120.00, vdesc=150.00)
+    return nfe_xml(ch, 1450, dh, 1, "VENDA DE PRODUCAO DO ESTABELECIMENTO",
+                   party("emit", EQUIP_CNPJ, "EQUIPAMENTOS PANIFICADORES PAULISTA S.A.", uf="SP", ie="113344556677", crt=3),
+                   party("dest", DEMO_CNPJ, "DOCE SABOR CONFEITARIA LTDA", ie="109988776"),
+                   [i1], tot, protocolo="135260000777002")
+
+
+SN102 = "<ICMSSN102><orig>0</orig><CSOSN>102</CSOSN></ICMSSN102>"
+
+
+def venda_buffet(hoje):
+    """Venda da Doce Sabor para buffet (Simples Nacional), autorizada, 3 parcelas."""
+    dh = (hoje - timedelta(days=1)).strftime("%Y-%m-%dT16:10:00-03:00")
+    ch = chave("52", hoje.strftime("%y%m"), DEMO_CNPJ, 1, 319, 16180339)
+    i1, v1 = item(1, "BOLO-CAS", "BOLO DE CASAMENTO 3 ANDARES", "19059090", "5101", "UN", 1, 1850.00, SN102)
+    i2, v2 = item(2, "DOCE-FINO", "DOCES FINOS SORTIDOS (CENTO)", "17049020", "5101", "CTO", 8, 260.00, SN102)
+    i3, v3 = item(3, "BEM-CAS", "BEM-CASADOS EMBALADOS (CENTO)", "19059090", "5101", "CTO", 5, 210.00, SN102)
+    tot, vnf = totais(v1 + v2 + v3)
+    return nfe_xml(ch, 319, dh, 1, "VENDA DE PRODUCAO DO ESTABELECIMENTO",
+                   party("emit", DEMO_CNPJ, "DOCE SABOR CONFEITARIA LTDA", ie="109988776", crt=1),
+                   party("dest", BUFFET_CNPJ, "BUFFET ESTRELA EVENTOS LTDA", ie="107766554"),
+                   [i1, i2, i3], tot, cobr=_parcelas(vnf, 3, hoje, primeiro=10, intervalo=30, nfat=319),
+                   protocolo="152260000777003")
+
+
+def venda_consumidor_mes_anterior(hoje):
+    """Venda a consumidor final (CPF) no mês anterior, autorizada, à vista."""
+    dia = hoje.replace(day=1) - timedelta(days=9)          # por volta do dia 20 do mês passado
+    dh = dia.strftime("%Y-%m-%dT10:05:00-03:00")
+    ch = chave("52", dia.strftime("%y%m"), DEMO_CNPJ, 1, 305, 14142135)
+    i1, v1 = item(1, "TORTA-LIM", "TORTA DE LIMAO 1,5KG", "19059090", "5101", "UN", 1, 98.00, SN102)
+    i2, v2 = item(2, "BRIG-GOU", "BRIGADEIRO GOURMET (CX 20)", "17049020", "5101", "CX", 3, 65.00, SN102)
+    i3, v3 = item(3, "PAO-MEL", "PAO DE MEL RECHEADO", "19059090", "5101", "UN", 12, 7.50, SN102)
+    i4, v4 = item(4, "CAFE-ESP", "CAFE ESPECIAL MOIDO 250G", "09012100", "5102", "UN", 2, 34.90, SN102)
+    tot, _ = totais(v1 + v2 + v3 + v4)
+    return nfe_xml(ch, 305, dh, 1, "VENDA A CONSUMIDOR FINAL",
+                   party("emit", DEMO_CNPJ, "DOCE SABOR CONFEITARIA LTDA", ie="109988776", crt=1),
+                   party("dest", CONSUMIDOR_CPF, "LUCAS FERREIRA SANTOS"),
+                   [i1, i2, i3, i4], tot, protocolo="152260000777004")
+
+
+def compra_frutas_sem_protocolo(hoje):
+    """Compra de frutas: XML <NFe> puro, sem protocolo de autorização (deve entrar com aviso)."""
+    dh = hoje.strftime("%Y-%m-%dT06:30:00-03:00")
+    ch = chave("52", hoje.strftime("%y%m"), FRUTAS_CNPJ, 1, 7734, 17320508)
+    isento = "<ICMS40><orig>0</orig><CST>40</CST></ICMS40>"
+    i1, v1 = item(1, "MOR-500", "MORANGO IN NATURA (BANDEJA 500G)", "08101000", "5102", "BDJ", 30, 9.80, isento)
+    i2, v2 = item(2, "LIM-TAH", "LIMAO TAHITI (KG)", "08055000", "5102", "KG", 15, 4.60, isento)
+    i3, v3 = item(3, "MARAC", "MARACUJA AZEDO (KG)", "08109000", "5102", "KG", 10, 8.90, isento)
+    tot, vnf = totais(v1 + v2 + v3)
+    return nfe_xml(ch, 7734, dh, 1, "VENDA DE PRODUCAO RURAL",
+                   party("emit", FRUTAS_CNPJ, "HORTIFRUTI BOM CAMPO LTDA", ie="106655443", crt=1),
+                   party("dest", DEMO_CNPJ, "DOCE SABOR CONFEITARIA LTDA", ie="109988776"),
+                   [i1, i2, i3], tot, cobr=_parcelas(vnf, 1, hoje, primeiro=7))
+
+
+PARA_IMPORTAR = {
+    "1_compra_laticinios_2_parcelas.xml": compra_laticinios,
+    "2_compra_batedeira_ipi_frete_desconto.xml": compra_batedeira,
+    "3_venda_buffet_3_parcelas.xml": venda_buffet,
+    "4_venda_consumidor_mes_anterior.xml": venda_consumidor_mes_anterior,
+    "5_compra_frutas_sem_protocolo.xml": compra_frutas_sem_protocolo,
+}
+
+
 INVALIDOS = {
     # modelo 65 (NFC-e) não é aceito
     "invalida_modelo65.xml": lambda x: x.replace("<mod>55</mod>", "<mod>65</mod>"),
@@ -208,6 +326,12 @@ def main():
     for nome, conteudo in amostras.items():
         (HERE / nome).write_text(conteudo, encoding="utf-8")
         print("gerado", nome)
+
+    destino = HERE / "para_importar"
+    destino.mkdir(exist_ok=True)
+    for nome, fn in PARA_IMPORTAR.items():
+        (destino / nome).write_text(fn(hoje), encoding="utf-8")
+        print("gerado para_importar/" + nome)
     print("CNPJ da empresa demo:", DEMO_CNPJ)
 
 
