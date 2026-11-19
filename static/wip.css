@@ -1,0 +1,447 @@
+/* =========================================================
+   Páginas "Em breve" (wip.html). Base em base.css / components.css.
+   ========================================================= */
+
+/* ---------- hero ---------- */
+.wip-hero{
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(0, 1.4fr) minmax(220px, 1fr);
+  gap:24px;
+  align-items:center;
+  padding:32px;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(239,68,68,.12), transparent 45%),
+    repeating-linear-gradient(-45deg, rgba(127,29,29,.035) 0 14px, transparent 14px 28px),
+    var(--surface);
+}
+
+/* faixa de obra no topo */
+.wip-hero::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:6px;
+  background:repeating-linear-gradient(-45deg, var(--primary) 0 16px, #1f0a0a 16px 32px);
+  background-size:45px 6px;
+  animation:stripes 1.2s linear infinite;
+}
+
+@keyframes stripes{
+  to{ background-position:45px 0; }
+}
+
+.wip-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 12px;
+  border-radius:999px;
+  background:var(--warning-soft);
+  color:var(--warning);
+  font-size:12px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+.wip-hero h1{
+  margin:14px 0 8px;
+  font-size:clamp(26px, 3vw, 34px);
+  font-weight:800;
+  color:var(--primary-dark);
+}
+
+.wip-hero h1 i{
+  color:var(--primary);
+  margin-right:6px;
+}
+
+.wip-summary{
+  font-size:15px;
+  color:#555;
+  max-width:560px;
+  margin-bottom:22px;
+}
+
+.wip-progress{
+  max-width:480px;
+}
+
+.wip-progress-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  font-size:13px;
+  color:var(--text-muted);
+  margin-bottom:6px;
+}
+
+.wip-progress-head strong{
+  font-size:22px;
+  color:var(--primary-dark);
+}
+
+.wip-bar{
+  height:12px;
+  border-radius:999px;
+  background:var(--primary-soft);
+  overflow:hidden;
+  margin-bottom:6px;
+}
+
+.wip-bar-fill{
+  height:100%;
+  width:0;
+  border-radius:999px;
+  background:
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.18) 0 8px, transparent 8px 16px),
+    var(--primary-gradient);
+  background-size:22px 100%, 100% 100%;
+  transition:width 1.4s cubic-bezier(.22, 1, .36, 1);
+  animation:stripes-bar 1s linear infinite;
+}
+
+@keyframes stripes-bar{
+  to{ background-position:22px 0, 0 0; }
+}
+
+/* ---------- engrenagens ---------- */
+.wip-art{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+
+.gears{
+  border:none;
+  background:none;
+  padding:0;
+  cursor:pointer;
+  width:100%;
+  max-width:280px;
+  border-radius:24px;
+  transition:transform .15s;
+}
+
+.gears:active{
+  transform:scale(.97);
+}
+
+.gears:focus-visible{
+  outline:3px solid rgba(220,38,38,.35);
+  outline-offset:4px;
+}
+
+.gears svg{
+  width:100%;
+  height:auto;
+  overflow:visible;
+  filter:drop-shadow(0 10px 18px rgba(127,29,29,.25));
+}
+
+.gear{
+  --speed:1;
+  animation:spin calc(10s / var(--speed)) linear infinite;
+}
+
+.gear-small{ animation-name:spin-rev; animation-duration:calc(6.4s / var(--speed)); }
+.gear-tiny{ animation-duration:calc(4.2s / var(--speed)); }
+
+@keyframes spin{ to{ transform:rotate(360deg); } }
+@keyframes spin-rev{ to{ transform:rotate(-360deg); } }
+
+.gears-hint{
+  font-size:12px;
+  color:var(--text-muted);
+  min-height:18px;
+  text-align:center;
+  transition:color .2s;
+}
+
+.gears-hint.cheer{
+  color:var(--primary);
+  font-weight:600;
+}
+
+/* ---------- grade ---------- */
+.wip-grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+  gap:20px;
+}
+
+/* ---------- roadmap ---------- */
+.roadmap{
+  list-style:none;
+  padding:0;
+  margin:0;
+  position:relative;
+}
+
+.roadmap::before{
+  content:"";
+  position:absolute;
+  left:15px;
+  top:8px;
+  bottom:8px;
+  width:2px;
+  background:var(--border);
+}
+
+.roadmap-item{
+  position:relative;
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  padding:8px 0;
+  opacity:0;
+  transform:translateX(-8px);
+  animation:itemIn .45s ease forwards;
+  animation-delay:calc(var(--i) * 110ms + 200ms);
+}
+
+@keyframes itemIn{
+  to{ opacity:1; transform:none; }
+}
+
+.roadmap-dot{
+  position:relative;
+  z-index:1;
+  width:32px;
+  height:32px;
+  flex-shrink:0;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  background:var(--surface);
+  border:2px solid var(--border);
+  color:var(--text-muted);
+}
+
+.roadmap-item.done .roadmap-dot{
+  background:var(--success);
+  border-color:var(--success);
+  color:white;
+}
+
+.roadmap-item.doing .roadmap-dot{
+  background:var(--warning-soft);
+  border-color:var(--warning);
+  color:var(--warning);
+  animation:hammer 1.4s ease-in-out infinite;
+}
+
+@keyframes hammer{
+  0%, 100%{ transform:rotate(0); }
+  20%{ transform:rotate(-18deg); }
+  40%{ transform:rotate(10deg); }
+}
+
+.roadmap-text{
+  font-size:14px;
+  padding-top:5px;
+  line-height:1.35;
+}
+
+.roadmap-text small{
+  display:block;
+  font-size:11px;
+  color:var(--text-muted);
+  margin-top:2px;
+}
+
+.roadmap-item.done .roadmap-text small{ color:var(--success); }
+.roadmap-item.doing .roadmap-text small{ color:var(--warning); font-weight:600; }
+
+/* ---------- enquanto isso ---------- */
+.ask-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.ask-chip{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  color:var(--text);
+  text-decoration:none;
+  font-size:13px;
+  background:var(--surface-alt);
+  transition:.2s;
+}
+
+.ask-chip > i:first-child{
+  color:var(--primary);
+}
+
+.ask-chip span{
+  flex:1;
+}
+
+.ask-go{
+  opacity:0;
+  transform:translateX(-6px);
+  transition:.2s;
+  color:var(--primary);
+}
+
+.ask-chip:hover{
+  border-color:var(--primary);
+  background:var(--primary-soft);
+}
+
+.ask-chip:hover .ask-go{
+  opacity:1;
+  transform:none;
+}
+
+.expert-cta{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border-radius:14px;
+  background:linear-gradient(135deg, var(--primary-dark), #dc2626);
+  color:white;
+  text-decoration:none;
+  transition:transform .2s, box-shadow .2s;
+}
+
+.expert-cta:hover{
+  color:white;
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(127,29,29,.3);
+}
+
+.expert-cta-icon{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:rgba(255,255,255,.15);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+}
+
+.expert-cta span:nth-child(2){
+  flex:1;
+  line-height:1.3;
+}
+
+.expert-cta strong{
+  display:block;
+  font-size:14px;
+}
+
+.expert-cta small{
+  opacity:.85;
+  font-size:12px;
+}
+
+/* ---------- outros módulos ---------- */
+.module-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+  gap:12px;
+}
+
+.module-card{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  color:var(--text);
+  text-decoration:none;
+  transition:.2s;
+}
+
+.module-card i{
+  font-size:20px;
+  color:var(--primary);
+}
+
+.module-card strong{
+  font-size:13px;
+}
+
+.module-card small{
+  font-size:11px;
+  color:var(--text-muted);
+}
+
+.module-card:hover{
+  border-color:var(--primary);
+  transform:translateY(-3px);
+  box-shadow:0 8px 20px rgba(127,29,29,.08);
+}
+
+.mini-bar{
+  height:5px;
+  border-radius:999px;
+  background:var(--primary-soft);
+  overflow:hidden;
+}
+
+.mini-bar div{
+  height:100%;
+  border-radius:999px;
+  background:var(--primary-gradient);
+}
+
+/* ---------- confete ---------- */
+.confetti{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100vh;
+  pointer-events:none;
+  z-index:2000;
+}
+
+/* ---------- acessibilidade / responsivo ---------- */
+@media (prefers-reduced-motion: reduce){
+  .gear, .wip-hero::before, .wip-bar-fill, .roadmap-item.doing .roadmap-dot{
+    animation:none;
+  }
+  .roadmap-item{
+    animation:none;
+    opacity:1;
+    transform:none;
+  }
+}
+
+@media (max-width: 1100px){
+  .wip-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 768px){
+  .wip-hero{
+    grid-template-columns:1fr;
+    padding:24px 18px;
+  }
+
+  .wip-art{
+    order:-1;
+  }
+
+  .gears{
+    max-width:180px;
+  }
+}

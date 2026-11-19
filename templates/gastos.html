@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Gastos{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='gastos.css') }}">
+{% endblock %}
+
+{% block content_class %}stack-page{% endblock %}
+
+{% block tip %}Mantenha seus gastos organizados para acompanhar melhor a saúde financeira do negócio.{% endblock %}
+
+{% macro variation(value, inverse=False) -%}
+  {# inverse: para gastos, subir é ruim (vermelho) #}
+  {% if value is none %}
+    <small class="muted">sem dados do mês anterior</small>
+  {% else %}
+    {% set good = (value >= 0) != inverse %}
+    <small class="{{ 'positive' if good else 'negative' }}">
+      <i class="bi bi-arrow-{{ 'up' if value >= 0 else 'down' }}"></i>
+      {{ value | abs | pct }} vs. mês anterior
+    </small>
+  {% endif %}
+{%- endmacro %}
+
+{% block topbar_actions %}
+  <form class="month-nav" method="get" action="{{ url_for('gastos.index') }}">
+    <a class="btn btn-light rounded-circle month-arrow" href="{{ url_for('gastos.index', mes=prev_month) }}" title="Mês anterior" aria-label="Mês anterior">
+      <i class="bi bi-chevron-left"></i>
+    </a>
+    <label class="btn btn-light rounded-pill period-btn mb-0">
+      <i class="bi bi-calendar3"></i>
+      <span>{{ month_label }}</span>
+      <input type="month" name="mes" value="{{ month_value }}" onchange="this.form.submit()" aria-label="Escolher mês">
+    </label>
+    <a class="btn btn-light rounded-circle month-arrow" href="{{ url_for('gastos.index', mes=next_month) }}" title="Próximo mês" aria-label="Próximo mês">
+      <i class="bi bi-chevron-right"></i>
+    </a>
+  </form>
+
+  <button class="btn btn-light rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#tx-modal" data-tx-new>
+    <i class="bi bi-plus-lg"></i>
+    <span class="d-none d-md-inline">Nova Transação</span>
+  </button>
+{% endblock %}
+
+{% block content %}
+
+  <div class="page-header">
+    <h5>Gastos</h5>
+    <span>Visão geral dos gastos e receitas de {{ month_label }}</span>
+  </div>
+
+  {% if dash %}
+
+  <!-- RESUMO -->
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div class="summary-icon income"><i class="bi bi-arrow-down-left"></i></div>
+      <div>
+        <span class="summary-label">Receitas</span>
+        <h3>{{ dash.income | brl }}</h3>
+        {{ variation(dash.income_var) }}
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon expense"><i class="bi bi-arrow-up-right"></i></div>
+      <div>
+        <span class="summary-label">Gastos</span>
+        <h3>{{ dash.expense | brl }}</h3>
+        {{ variation(dash.expense_var, inverse=True) }}
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon balance"><i class="bi bi-wallet2"></i></div>
+      <div>
+        <span class="summary-label">Saldo</span>
+        <h3 class="{{ 'negative' if dash.balance < 0 }}">{{ dash.balance | brl }}</h3>
+        {{ variation(dash.balance_var) }}
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon bills"><i class="bi bi-receipt"></i></div>
+      <div>
+        <span class="summary-label">Gastos pendentes</span>
+        <h3>{{ dash.pending_total | brl }}</h3>
+        <small class="muted">{{ dash.pending_count }} lançamento{{ 's' if dash.pending_count != 1 }}</small>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- GRÁFICO + CATEGORIAS -->
+  <div class="dashboard-grid">
+
+    <div class="card-custom chart-card">
+
+      <div class="card-header-custom">
+        <div>
+          <h6>Evolução financeira</h6>
+          <span>Receitas x gastos nos últimos {{ dash.series | length }} meses</span>
+        </div>
+      </div>
+
+      <div class="fake-chart">
+
+        <div class="chart-y">
+          {% for v in dash.axis %}<span>{{ axis_label(v) }}</span>{% endfor %}
+        </div>
+
+        <div class="chart-area">
+          <div class="grid-line"></div>
+          <div class="grid-line"></div>
+          <div class="grid-line"></div>
+          <div class="grid-line"></div>
+
+          <div class="bars">
+            {% for s in dash.series %}
+            <div class="month">
+              <div class="bar income-bar" style="height:{{ '%.1f' % s.income_h }}%" title="Receitas: {{ s.income | brl }}"></div>
+              <div class="bar expense-bar" style="height:{{ '%.1f' % s.expense_h }}%" title="Gastos: {{ s.expense | brl }}"></div>
+              <small>{{ s.label }}</small>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+
+      <div class="chart-legend">
+        <span><i class="legend income-legend"></i> Receitas</span>
+        <span><i class="legend expense-legend"></i> Gastos</span>
+      </div>
+
+    </div>
+
+    <div class="card-custom">
+
+      <div class="card-header-custom">
+        <div>
+          <h6>Gastos por categoria</h6>
+          <span>{{ month_label }}</span>
+        </div>
+      </div>
+
+      {% if dash.categories %}
+      <div class="category-list">
+        {% for c in dash.categories %}
+        <div class="category-item">
+          <div class="category-info">
+            <div class="category-icon"><i class="bi {{ c.icon }}"></i></div>
+            <div>
+              <strong>{{ c.name }}</strong>
+              <small>{{ c.count }} lançamento{{ 's' if c.count != 1 }}</small>
+            </div>
+          </div>
+          <div class="category-value">
+            <strong>{{ c.total | brl }}</strong>
+            <span>{{ c.pct | pct }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-state">Nenhum gasto registrado neste mês.</p>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+  <!-- TRANSAÇÕES -->
+  <div class="card-custom transactions-card">
+
+    <div class="card-header-custom">
+      <div>
+        <h6>Transações do mês</h6>
+        <span>{{ dash.transactions | length }} movimentaç{{ 'ões' if dash.transactions | length != 1 else 'ão' }} em {{ month_label }}</span>
+      </div>
+    </div>
+
+    {% if dash.transactions %}
+    <div class="table-responsive">
+      <table class="transactions-table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Data</th>
+            <th>Status</th>
+            <th class="text-end">Valor</th>
+            <th class="text-end"><span class="visually-hidden">Ações</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in dash.transactions %}
+          <tr>
+            <td><strong>{{ t.description }}</strong></td>
+            <td><span class="category-tag {{ 'income-tag' if t.type == 'income' }}">{{ t.category }}</span></td>
+            <td>{{ t.date.strftime('%d/%m/%Y') }}</td>
+            <td>
+              <span class="status {{ 'pending' if t.status == 'pending' else 'paid' }}">
+                {{ status_labels[t.type][t.status] }}
+              </span>
+            </td>
+            <td class="text-end {{ 'positive-value' if t.type == 'income' else 'negative-value' }}">
+              {{ '+' if t.type == 'income' else '-' }} {{ t.amount | brl }}
+            </td>
+            <td class="text-end text-nowrap">
+              <button class="row-btn" title="Editar" aria-label="Editar"
+                      data-bs-toggle="modal" data-bs-target="#tx-modal"
+                      data-tx='{{ {"id": t.id, "type": t.type, "description": t.description, "category": t.category,
+                                   "amount": "%.2f" % t.amount, "date": t.date.isoformat(), "status": t.status} | tojson | forceescape }}'>
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="row-btn danger" title="Excluir" aria-label="Excluir"
+                      data-bs-toggle="modal" data-bs-target="#delete-modal"
+                      data-tx-id="{{ t.id }}" data-tx-desc="{{ t.description }}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>Nenhuma transação em {{ month_label }}.</p>
+      <button class="btn btn-brand rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#tx-modal" data-tx-new>
+        <i class="bi bi-plus-lg"></i> Cadastrar a primeira
+      </button>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {% endif %}
+
+  <!-- MODAL: NOVA / EDITAR TRANSAÇÃO -->
+  <div class="modal fade" id="tx-modal" tabindex="-1" aria-labelledby="tx-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" method="post" id="tx-form"
+            data-create-url="{{ url_for('gastos.create') }}"
+            data-edit-url="{{ url_for('gastos.update', tx_id=0) }}">
+        <input type="hidden" name="mes" value="{{ month_value }}">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="tx-modal-title">Nova transação</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="type-toggle mb-3" role="radiogroup" aria-label="Tipo">
+            <input type="radio" class="btn-check" name="type" id="type-expense" value="expense" checked>
+            <label class="btn" for="type-expense"><i class="bi bi-arrow-up-right"></i> Gasto</label>
+
+            <input type="radio" class="btn-check" name="type" id="type-income" value="income">
+            <label class="btn" for="type-income"><i class="bi bi-arrow-down-left"></i> Receita</label>
+          </div>
+
+          <label for="tx-description" class="form-label">Descrição</label>
+          <input type="text" class="form-control mb-3" id="tx-description" name="description" maxlength="200" required>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label for="tx-amount" class="form-label">Valor (R$)</label>
+              <input type="number" class="form-control" id="tx-amount" name="amount" min="0.01" step="0.01" inputmode="decimal" required>
+            </div>
+            <div class="col-6">
+              <label for="tx-date" class="form-label">Data</label>
+              <input type="date" class="form-control" id="tx-date" name="date" value="{{ today }}" required>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-6">
+              <label for="tx-category" class="form-label">Categoria</label>
+              <select class="form-select" id="tx-category" name="category" required></select>
+            </div>
+            <div class="col-6">
+              <label for="tx-status" class="form-label">Status</label>
+              <select class="form-select" id="tx-status" name="status" required>
+                <option value="done">Pago</option>
+                <option value="pending">Pendente</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-brand px-4">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRMAR EXCLUSÃO -->
+  <div class="modal fade" id="delete-modal" tabindex="-1" aria-labelledby="delete-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <form class="modal-content" method="post" id="delete-form"
+            data-url="{{ url_for('gastos.delete', tx_id=0) }}">
+        <input type="hidden" name="mes" value="{{ month_value }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="delete-modal-title">Excluir transação</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          Excluir <strong id="delete-desc"></strong>? Esta ação não pode ser desfeita.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script id="tx-config" type="application/json">{{ {"categories": categories, "statusLabels": status_labels} | tojson }}</script>
+  <script src="{{ url_for('static', filename='gastos.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Entrar{% endblock %}
+
+{% block form %}
+  <form method="post" novalidate>
+
+    <label for="email" class="form-label">E-mail</label>
+    <input type="email" id="email" name="email" class="form-control mb-3"
+           placeholder="voce@empresa.com.br" value="{{ email or '' }}" required autofocus>
+
+    <label for="password" class="form-label">Senha</label>
+    <input type="password" id="password" name="password" class="form-control mb-4"
+           placeholder="••••••••" required>
+
+    <button type="submit" class="btn btn-brand w-100 py-2">Entrar</button>
+
+  </form>
+
+  <a href="{{ url_for('auth.register') }}" class="login-link">Não tem conta? Criar conta</a>
+{% endblock %}

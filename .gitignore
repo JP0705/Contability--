@@ -1,0 +1,22 @@
+# Segredos
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# IDE / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Claude Code (config local da ferramenta)
+.claude/
+
+# backup local da logo anterior (já está no histórico do git como static/img/logo.png)
+static/img/logo_antigo.png

@@ -1,0 +1,211 @@
+/* =========================================================
+   Notas Fiscais (notas.html, nota_detalhe.html) e Minha empresa.
+   Componentes comuns em components.css.
+   ========================================================= */
+
+/* filtro Todas / Entradas / Saídas */
+.filter-tabs{
+  display:inline-flex;
+  background:var(--surface-alt);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:3px;
+  gap:2px;
+}
+
+.filter-tabs a{
+  padding:5px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  color:var(--text-muted);
+  text-decoration:none;
+}
+
+.filter-tabs a.active{
+  background:var(--primary);
+  color:white;
+}
+
+/* upload */
+.dropzone{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  padding:28px 16px;
+  border:2px dashed #f0caca;
+  border-radius:var(--radius);
+  background:var(--surface-alt);
+  text-align:center;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.dropzone:hover,
+.dropzone.dragover{
+  border-color:var(--primary);
+  background:var(--primary-soft);
+}
+
+.dropzone i{
+  font-size:34px;
+  color:var(--primary);
+}
+
+.dropzone strong{
+  font-size:14px;
+}
+
+.dropzone small{
+  color:var(--text-muted);
+  font-size:12px;
+}
+
+/* input real invisível por cima da área (mantém validação "required") */
+.dropzone input[type=file]{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  cursor:pointer;
+}
+
+.file-list{
+  list-style:none;
+  padding:0;
+  margin:12px 0 0;
+  max-height:160px;
+  overflow-y:auto;
+}
+
+.file-list li{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-size:13px;
+  padding:6px 10px;
+  border-radius:8px;
+  background:var(--surface-alt);
+  margin-bottom:4px;
+}
+
+.file-list li.invalid{
+  background:var(--danger-soft);
+  color:var(--danger);
+}
+
+.file-list small{
+  color:var(--text-muted);
+  white-space:nowrap;
+}
+
+/* detalhe */
+.nfe-alert{
+  border-radius:var(--radius);
+  font-size:13px;
+}
+
+.nfe-alert ul{
+  padding-left:20px;
+  margin-top:4px;
+}
+
+.nfe-grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .9fr);
+  gap:20px;
+}
+
+.nfe-grid.two{
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.nfe-dl{
+  display:grid;
+  grid-template-columns:auto minmax(0, 1fr);
+  gap:6px 14px;
+  margin:0;
+  font-size:13px;
+}
+
+.nfe-dl dt{
+  color:var(--text-muted);
+  font-weight:500;
+}
+
+.nfe-dl dd{
+  margin:0;
+  overflow-wrap:anywhere;
+}
+
+.nfe-dl.totals dd{
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+.nfe-dl .grand{
+  border-top:1px solid var(--border);
+  padding-top:8px;
+  margin-top:4px;
+  font-weight:700;
+  font-size:15px;
+}
+
+.nfe-dl dt.grand{
+  color:var(--text);
+}
+
+.chave{
+  font-family:Consolas, "Courier New", monospace;
+  font-size:12px;
+  letter-spacing:.3px;
+}
+
+.you{
+  font-size:10px;
+  font-weight:600;
+  text-transform:uppercase;
+  background:var(--primary-soft);
+  color:var(--primary);
+  padding:2px 6px;
+  border-radius:6px;
+  margin-left:6px;
+  vertical-align:middle;
+}
+
+.launch-preview{
+  list-style:none;
+  padding:0;
+  margin:0 0 14px;
+  font-size:13px;
+}
+
+.launch-preview li{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 0;
+  border-bottom:1px solid var(--border);
+}
+
+@media (max-width: 1200px){
+  .nfe-grid,
+  .nfe-grid.two{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 768px){
+  .notas-table th:nth-child(2),
+  .notas-table td:nth-child(2),
+  .notas-table th:nth-child(5),
+  .notas-table td:nth-child(5){
+    display:none;
+  }
+
+  .card-header-custom{
+    flex-wrap:wrap;
+    gap:10px;
+  }
+}

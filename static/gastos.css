@@ -1,0 +1,219 @@
+/* =========================================================
+   Página de Gastos (gastos.html). Componentes comuns em components.css.
+   ========================================================= */
+
+/* =========================
+   GRÁFICO + CATEGORIAS
+========================= */
+
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap:20px;
+}
+
+.fake-chart{
+  height:270px;
+  display:flex;
+  gap:12px;
+}
+
+.chart-y{
+  width:35px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  color:#aaa;
+  font-size:10px;
+  padding-bottom:28px;
+}
+
+.chart-area{
+  flex:1;
+  position:relative;
+  display:flex;
+  align-items:stretch;
+}
+
+/* linha de base alinhada com o "0" do eixo */
+.chart-area::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:28px;
+  height:1px;
+  background:#ddd;
+}
+
+.grid-line{
+  position:absolute;
+  left:0;
+  right:0;
+  height:1px;
+  background:#f0eded;
+}
+
+/* 4 linhas = 20k, 15k, 10k, 5k (área útil termina 28px acima da base) */
+.grid-line:nth-child(1){ top:0; }
+.grid-line:nth-child(2){ top:calc((100% - 28px) * .25); }
+.grid-line:nth-child(3){ top:calc((100% - 28px) * .50); }
+.grid-line:nth-child(4){ top:calc((100% - 28px) * .75); }
+
+.bars{
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  padding:0 15px;
+  position:relative;
+}
+
+.month{
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  gap:5px;
+  /* área útil do gráfico: altura total menos o espaço do rótulo */
+  height:calc(100% - 28px);
+}
+
+.bar{
+  width:14px;
+  border-radius:5px 5px 0 0;
+}
+
+/* receitas = verde e gastos = vermelho, igual aos cards de resumo */
+.income-bar,
+.income-legend{ background:var(--success); }
+
+.expense-bar,
+.expense-legend{ background:var(--danger); }
+
+.month small{
+  position:absolute;
+  top:100%;
+  margin-top:8px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:10px;
+  color:#999;
+}
+
+.chart-legend{
+  display:flex;
+  gap:20px;
+  margin-top:10px;
+  font-size:11px;
+  color:#777;
+}
+
+.chart-legend span{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.legend{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.category-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.category-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:9px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.category-item:last-child{
+  border-bottom:none;
+}
+
+.category-info{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.category-icon{
+  width:34px;
+  height:34px;
+  border-radius:9px;
+  background:var(--primary-soft);
+  color:var(--primary);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.category-info strong,
+.category-value strong{
+  display:block;
+  font-size:13px;
+}
+
+.category-info small,
+.category-value span{
+  color:var(--text-muted);
+  font-size:11px;
+}
+
+.category-value{
+  text-align:right;
+}
+
+/* =========================
+   MODAL: TIPO (GASTO x RECEITA)
+========================= */
+
+.type-toggle{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.type-toggle .btn{
+  border:1px solid var(--border);
+  border-radius:12px;
+  color:var(--text-muted);
+}
+
+#type-expense:checked + label{
+  background:var(--danger-soft);
+  border-color:var(--danger);
+  color:var(--danger);
+}
+
+#type-income:checked + label{
+  background:var(--success-soft);
+  border-color:var(--success);
+  color:var(--success);
+}
+
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 1200px){
+  .dashboard-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 768px){
+  .transactions-table th:nth-child(2),
+  .transactions-table td:nth-child(2),
+  .transactions-table th:nth-child(3),
+  .transactions-table td:nth-child(3){
+    display:none;
+  }
+}

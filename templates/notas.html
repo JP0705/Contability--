@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Notas Fiscais{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='notas.css') }}">
+{% endblock %}
+
+{% block content_class %}stack-page{% endblock %}
+
+{% block tip %}Importe os XMLs de NF-e (modelo 55) de compras e vendas para acompanhar valores e impostos.{% endblock %}
+
+{% block topbar_actions %}
+  <form class="month-nav" method="get" action="{{ url_for('notas.index') }}">
+    {% if direcao %}<input type="hidden" name="tipo" value="{{ direcao }}">{% endif %}
+    <a class="btn btn-light rounded-circle month-arrow" href="{{ url_for('notas.index', mes=prev_month, tipo=direcao) }}" title="Mês anterior" aria-label="Mês anterior">
+      <i class="bi bi-chevron-left"></i>
+    </a>
+    <label class="btn btn-light rounded-pill period-btn mb-0">
+      <i class="bi bi-calendar3"></i>
+      <span>{{ month_label }}</span>
+      <input type="month" name="mes" value="{{ month_value }}" onchange="this.form.submit()" aria-label="Escolher mês">
+    </label>
+    <a class="btn btn-light rounded-circle month-arrow" href="{{ url_for('notas.index', mes=next_month, tipo=direcao) }}" title="Próximo mês" aria-label="Próximo mês">
+      <i class="bi bi-chevron-right"></i>
+    </a>
+  </form>
+
+  <button class="btn btn-light rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#upload-modal">
+    <i class="bi bi-upload"></i>
+    <span class="d-none d-md-inline">Importar XML</span>
+  </button>
+{% endblock %}
+
+{% block content %}
+
+  <div class="page-header">
+    <h5>Notas Fiscais</h5>
+    <span>NF-e modelo 55 de {{ month_label }} · {{ company.razao_social }} ({{ company.cnpj | cnpj }})</span>
+  </div>
+
+  <!-- RESUMO -->
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div class="summary-icon expense"><i class="bi bi-box-arrow-in-down"></i></div>
+      <div>
+        <span class="summary-label">Entradas (compras)</span>
+        <h3>{{ resumo.entradas | brl }}</h3>
+        <small class="muted">{{ resumo.qtd_entradas }} nota{{ 's' if resumo.qtd_entradas != 1 }}</small>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon income"><i class="bi bi-box-arrow-up"></i></div>
+      <div>
+        <span class="summary-label">Saídas (vendas)</span>
+        <h3>{{ resumo.saidas | brl }}</h3>
+        <small class="muted">{{ resumo.qtd_saidas }} nota{{ 's' if resumo.qtd_saidas != 1 }}</small>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon bills"><i class="bi bi-bank"></i></div>
+      <div>
+        <span class="summary-label">Impostos destacados</span>
+        <h3>{{ resumo.impostos | brl }}</h3>
+        <small class="muted">ICMS, ST, IPI, PIS, COFINS, IBS e CBS</small>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon balance"><i class="bi bi-receipt"></i></div>
+      <div>
+        <span class="summary-label">Notas no mês</span>
+        <h3>{{ resumo.qtd }}</h3>
+        <small class="muted">{{ 'filtrando ' ~ ('entradas' if direcao == 'entrada' else 'saídas') if direcao else 'todas as notas' }}</small>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LISTA -->
+  <div class="card-custom transactions-card">
+
+    <div class="card-header-custom">
+      <div>
+        <h6>Notas importadas</h6>
+        <span>{{ notas | length }} nota{{ 's' if notas | length != 1 }} em {{ month_label }}</span>
+      </div>
+
+      <div class="filter-tabs" role="tablist" aria-label="Filtrar por tipo">
+        <a class="{{ 'active' if not direcao }}" href="{{ url_for('notas.index', mes=month_value) }}">Todas</a>
+        <a class="{{ 'active' if direcao == 'entrada' }}" href="{{ url_for('notas.index', mes=month_value, tipo='entrada') }}">Entradas</a>
+        <a class="{{ 'active' if direcao == 'saida' }}" href="{{ url_for('notas.index', mes=month_value, tipo='saida') }}">Saídas</a>
+      </div>
+    </div>
+
+    {% if notas %}
+    <div class="table-responsive">
+      <table class="transactions-table notas-table">
+        <thead>
+          <tr>
+            <th>Nº / Série</th>
+            <th>Emissão</th>
+            <th>Tipo</th>
+            <th>{{ 'Fornecedor / Cliente' }}</th>
+            <th>Situação</th>
+            <th class="text-end">Valor</th>
+            <th class="text-end"><span class="visually-hidden">Ações</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in notas %}
+          {% set contraparte = n.dest_nome if n.direcao == 'saida' else n.emit_nome %}
+          {% set contra_doc = n.dest_doc if n.direcao == 'saida' else n.emit_doc %}
+          <tr>
+            <td><strong>{{ n.numero }}</strong> <span class="muted">/ {{ n.serie }}</span></td>
+            <td>{{ n.emissao.strftime('%d/%m/%Y') }}</td>
+            <td>
+              <span class="category-tag {{ 'income-tag' if n.direcao == 'saida' }}">
+                {{ 'Saída' if n.direcao == 'saida' else 'Entrada' }}
+              </span>
+            </td>
+            <td>
+              <strong>{{ contraparte or '—' }}</strong>
+              {% if contra_doc %}<small class="d-block muted">{{ contra_doc | cnpj }}</small>{% endif %}
+            </td>
+            <td class="text-nowrap">
+              {% if n.ambiente == 2 %}
+                <span class="status pending" title="Ambiente de homologação">Teste</span>
+              {% elif n.protocolo %}
+                <span class="status paid">Autorizada</span>
+              {% else %}
+                <span class="status pending" title="XML sem protocolo de autorização">Sem protocolo</span>
+              {% endif %}
+              {% if n.avisos %}
+                <i class="bi bi-exclamation-triangle text-warning ms-1" title="{{ n.avisos | join(' • ') }}"></i>
+              {% endif %}
+              {% if n.tem_lancamentos %}
+                <i class="bi bi-link-45deg ms-1 muted" title="Lançamentos gerados em Gastos"></i>
+              {% endif %}
+            </td>
+            <td class="text-end {{ 'positive-value' if n.direcao == 'saida' else 'negative-value' }}">
+              {{ n.v_total | brl }}
+            </td>
+            <td class="text-end">
+              <a class="row-btn d-inline-flex align-items-center justify-content-center" href="{{ url_for('notas.detail', nfe_id=n.id) }}" title="Ver detalhes" aria-label="Ver detalhes">
+                <i class="bi bi-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>Nenhuma nota {{ 'de entrada ' if direcao == 'entrada' else ('de saída ' if direcao == 'saida' else '') }}emitida em {{ month_label }}.</p>
+      <button class="btn btn-brand rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#upload-modal">
+        <i class="bi bi-upload"></i> Importar XML
+      </button>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- MODAL: IMPORTAR -->
+  <div class="modal fade" id="upload-modal" tabindex="-1" aria-labelledby="upload-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" method="post" action="{{ url_for('notas.upload') }}" enctype="multipart/form-data" id="upload-form">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="upload-modal-title">Importar NF-e</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <label class="dropzone" for="xml-input" id="dropzone">
+            <i class="bi bi-filetype-xml"></i>
+            <strong>Clique para escolher ou arraste os arquivos aqui</strong>
+            <small>XML de NF-e modelo 55 (leiaute 4.00) · até 50 arquivos, 2 MB cada</small>
+            <input type="file" id="xml-input" name="xmls" accept=".xml,application/xml,text/xml" multiple required>
+          </label>
+
+          <ul class="file-list" id="file-list"></ul>
+
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" name="gerar_lancamentos" value="1" id="gerar" checked>
+            <label class="form-check-label" for="gerar">
+              Gerar lançamentos em <strong>Gastos</strong> automaticamente
+              <small class="d-block text-muted">Compras viram gastos e vendas viram receitas; parcelas com vencimento futuro entram como pendentes.</small>
+            </label>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-brand px-4" id="upload-submit">
+            <i class="bi bi-upload"></i> Importar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='notas.js') }}"></script>
+{% endblock %}

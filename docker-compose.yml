@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: contability-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-contability}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    restart: unless-stopped
+
+volumes:
+  pgdata:

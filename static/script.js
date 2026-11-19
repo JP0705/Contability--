@@ -34,13 +34,42 @@ function removeTypingIndicator(){
     }
 }
 
-function addMessage(text, sender = "bot") {
+// Markdown da IA -> HTML seguro. A resposta do modelo não é confiável (pode
+// repetir HTML/scripts vindos do próprio usuário ou de prompt injection), então
+// todo HTML gerado passa pelo DOMPurify antes de entrar no DOM.
+function renderMarkdown(text){
+
+    if(typeof DOMPurify === "undefined" || typeof marked === "undefined"){
+        // biblioteca não carregou (CDN fora do ar): mostra como texto puro
+        const tmp = document.createElement("div");
+        tmp.textContent = text;
+        return tmp.innerHTML.replace(/\n/g, "<br>");
+    }
+
+    return DOMPurify.sanitize(marked.parse(text), {
+        USE_PROFILE: { html: true },   // sem SVG/MathML
+        FORBID_TAGS: ["style", "form", "input", "button", "textarea", "select"],
+        FORBID_ATTR: ["style"]
+    });
+}
+
+// links das respostas abrem em nova aba, sem dar acesso a esta página
+if(typeof DOMPurify !== "undefined"){
+    DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+        if(node.tagName === "A" && node.hasAttribute("href")){
+            node.setAttribute("target", "_blank");
+            node.setAttribute("rel", "noopener noreferrer");
+        }
+    });
+}
+
+function addMessage(text, sender = "bot", time = null) {
 
     const div = document.createElement("div");
 
     div.classList.add("message");
 
-    const time = new Date().toLocaleTimeString([], {
+    time = time || new Date().toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit'
     });
@@ -49,21 +78,27 @@ function addMessage(text, sender = "bot") {
 
         div.classList.add("user");
 
-        div.innerHTML = `
-            <div>${text}</div>
-            <small>${time}</small>
-        `;
+        // textContent evita injeção de HTML vindo do próprio usuário
+        const content = document.createElement("div");
+        content.textContent = text;
+
+        const small = document.createElement("small");
+        small.textContent = time;
+
+        div.append(content, small);
 
     }else{
 
         div.classList.add("bot");
 
-        div.innerHTML = `
-            <div class="message-content">
-                ${marked.parse(text)}
-            </div>
-            <small>${time}</small>
-        `;
+        const content = document.createElement("div");
+        content.classList.add("message-content");
+        content.innerHTML = renderMarkdown(text);
+
+        const small = document.createElement("small");
+        small.textContent = time;
+
+        div.append(content, small);
     }
 
     chatBody.appendChild(div);
@@ -94,11 +129,16 @@ async function sendMessage(){
             })
         });
 
+        if(response.status === 401){
+            window.location.href = "/login";
+            return;
+        }
+
         const data = await response.json();
 
         removeTypingIndicator();
 
-        addMessage(data.reply);
+        addMessage(response.ok ? data.reply : (data.error || "Erro ao conectar com a IA."));
 
     }catch(error){
 
@@ -111,7 +151,7 @@ async function sendMessage(){
 sendBtn.addEventListener("click", sendMessage);
 
 userInput.addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){
+    if(e.key === "Enter" && !e.isComposing){
         sendMessage();
     }
 });
@@ -120,19 +160,27 @@ async function newChat() {
 
     try {
 
-        await fetch("/new-chat", {
+        const response = await fetch("/new-chat", {
             method: "POST"
         });
 
+        if(response.status === 401){
+            window.location.href = "/login";
+            return;
+        }
+
+        if(!response.ok){
+            throw new Error("falha ao limpar histórico");
+        }
+
         chatBody.innerHTML = "";
 
-        addMessage(`
-            👋 Olá!
-
-            Sou o Contability, seu assistente contábil.
-
-            Como posso ajudar você hoje?
-        `);
+        // sem indentação: em Markdown, linhas recuadas viram bloco de código
+        addMessage([
+            "👋 Olá!",
+            "Sou o Contability, seu assistente contábil.",
+            "Como posso ajudar você hoje?"
+        ].join("\n\n"));
 
     } catch (error) {
 
@@ -141,3 +189,28 @@ async function newChat() {
 }
 
 newChatBtn.addEventListener("click", newChat);
+
+// histórico salvo do usuário (injetado pelo servidor em index.html)
+function loadHistory(){
+
+    const el = document.getElementById("chat-history");
+
+    if(!el) return;
+
+    const history = JSON.parse(el.textContent || "[]");
+
+    history.forEach(m => {
+        addMessage(m.content, m.role === "user" ? "user" : "bot", m.time);
+    });
+}
+
+loadHistory();
+
+// pergunta sugerida vinda de outra página (ex.: "Em breve" → /?q=...):
+// preenche o campo, sem enviar, e limpa a URL
+const suggested = new URLSearchParams(window.location.search).get("q");
+if(suggested){
+    userInput.value = suggested.slice(0, 500);
+    userInput.focus();
+    history.replaceState(null, "", window.location.pathname);
+}
